@@ -1,0 +1,185 @@
+---
+title: "Evidencia 02"
+author: 'Noemi Carolina Guerra Montiel A00826944'
+date: "4/29/2020"
+output: html_document
+---
+# PARTE 1 - Video
+
+## Link del video
+<https://youtu.be/8UQ6i1RccZQ>
+
+# PARTE 2 - Código
+
+## Librerías
+```{r}
+library(ape)
+library(phytools)
+library(Biostrings)
+library(seqinr)
+library(adegenet)
+library(ggtree)
+library(DECIPHER)
+library(viridis)
+library(ggplot2)
+```
+
+## Variantes de influenza de México y del mundo.
+```{r}
+#LAs variantes de influenza utilizando el segmento 4 del virus (HA)
+virus<-c("CY049836.1","EF382359.1","EF101749.1","CY009892.1","JQ290156.1","CY002954.1","CY050198.1","KT889237.1","CY125728.1")
+
+virus_sequences <- read.GenBank(virus)
+```
+```{r}
+attr(virus_sequences, "species")
+```
+```{r}
+attr(virus_sequences, "description")
+```
+
+
+## Número de bases de cada variante
+```{r}
+#Número de bases de H1N5 de África
+print(length(virus_sequences[[1]]))
+#Número de bases de H1N1 de Asia
+print(length(virus_sequences[[2]]))
+#Número de bases de H1N1 de Europa
+print(length(virus_sequences[[3]]))
+#Número de bases de H1N2 de Ámerica del Norte
+print(length(virus_sequences[[4]]))
+#Número de bases de H1N1 de Ámerica del Sur
+print(length(virus_sequences[[5]]))
+#Número de bases de H3N2 de Oceanía
+print(length(virus_sequences[[6]]))
+#Número de bases de A(H1N1) México
+print(length(virus_sequences[[7]]))
+#Número de bases de A(H3N2) México
+print(length(virus_sequences[[8]]))
+#Número de bases de A(H7N3) México
+print(length(virus_sequences[[9]]))
+```
+
+## Comparación entre variantes del virus y las bases del ADN que lo componen
+
+```{r}
+# Ids de cada virus
+virus_GenBank_IDs <- paste(attr(virus_sequences, "species"), names(virus_sequences), sep ="_HA_") 
+virus_GenBank_IDs
+```
+
+```{r}
+# Archivo del GenBank a FASTA con todas las secuencias:
+write.dna(virus_sequences,  file ="virus_seqs.fasta", format = "fasta", append = FALSE)
+```
+
+```{r}
+# Lectura de archivo Fasta para procesarlo
+virus_seq_no_alineadas <- read.fasta("virus_seqs.fasta", seqtype = "DNA", as.string = TRUE, forceDNAtolower = FALSE)
+virus_seq_no_alineadas
+```
+
+```{r}
+# Sobre escribir el archivo con más datos
+write.fasta(sequences = virus_seq_no_alineadas, names = virus_GenBank_IDs, nbchar = 10, file.out = "virus_seqs.fasta")
+```
+
+```{r}
+# Volver a cargar los datos en formato FASTA
+virus_seq_no_alineadas <- read.fasta("virus_seqs.fasta", seqtype = "DNA", as.string = FALSE, forceDNAtolower = FALSE)
+virus_seq_no_alineadas
+```
+
+```{r}
+# Función de la gráfica
+comparacion <- function(s1,s2,s3,s4,s5,s6, s7, s8, s9){
+  par(mfrow=c(3,3))
+  barplot(table(s1), col = 1:4, main = "H1N5 África")
+  barplot(table(s2), col = 1:4, main = "H1N1 Asia")
+  barplot(table(s3), col = 1:4, main = "H1N1 Europa")
+  barplot(table(s4), col = 1:4, main = "H3N2 Oceanía")
+  barplot(table(s5), col = 1:4, main = "H1N2 América del Norte")
+  barplot(table(s6), col = 1:4, main = "H1N1 América del Sur")
+  barplot(table(s7), col = 1:4, main = "H1N1 en México")
+  barplot(table(s8), col = 1:4, main = "H3N2 en México")
+  barplot(table(s9), col = 1:4, main = "H7N3 en México")
+  
+}
+#Gráfica 
+comparacion(virus_seq_no_alineadas[[1]],virus_seq_no_alineadas[[2]],virus_seq_no_alineadas[[3]],virus_seq_no_alineadas[[4]],virus_seq_no_alineadas[[5]],virus_seq_no_alineadas[[6]],virus_seq_no_alineadas[[7]],virus_seq_no_alineadas[[8]],virus_seq_no_alineadas[[9]])
+```
+
+
+## Análisis jerárquico global obtenido de las secuencias (árbol filogenético).
+
+```{r}
+# Archivo en formato DNAStringSet
+virus_seq_no_alineadas <- readDNAStringSet("virus_seqs.fasta", format = "fasta")
+virus_seq_no_alineadas
+```
+
+```{r}
+# Orientación de secuencia
+virus_seq_no_alineadas <- OrientNucleotides(virus_seq_no_alineadas)
+```
+
+```{r}
+# Alineamiento de las secuencias
+virus_align_seqs <- AlignSeqs(virus_seq_no_alineadas)
+```
+
+```{r}
+# Guardar el archivo y leer las secuencias alineadas
+writeXStringSet(virus_align_seqs, file = "virus_align_seq.fasta")
+virus_aligned <- read.alignment("virus_align_seq.fasta", format = "fasta") 
+virus_aligned
+
+```
+
+```{r}
+# Matriz de distancia entre las secuencias
+matriz_distancia <- dist.alignment(virus_aligned, matrix = "similarity")
+```
+
+```{r}
+# Crear árbol filogenético
+virus_filogenetico <- nj(matriz_distancia)
+class(virus_filogenetico)
+```
+
+```{r}
+# visualización del árbol
+virus_plot_filogenetico <- ladderize(virus_filogenetico)
+plot(virus_plot_filogenetico, font = 20, cex = 0.8)
+title("Arbol filogenético de variantes de influenza segmento 4")
+```
+
+## Interpretación de la gráficas
+### Gráfica 1: Comparación entre variantes del virus y las bases del ADN que lo componen
+Como se puede observar, los nucleótidos que aparecen con menos frecuencia en este tipo de virus son la citosina y guanina (excepto en la de México H7N3), y los que aparecen con mayor frecuencia son la timina y adenina. Esto significa que su punto de fusión es menor que si tuvieran mayor CG y sus enlaces no son tan difíciles de romper. Es importante mencionar que todos los virus de la influenza constan del ARN de cadena simple a diferencia del ADN de cadena doble. Los genes del ARN de los virus de la influenza están constituidos por cadenas de nucleótidos que están unidas entre si.
+
+También es importante añadir que la comparación de la composición de nucleótidos en el gen de un virus con el orden de los nucleótidos de otro gen puede demostrar ciertas variaciones entre los dos virus. Si bien, como se puede observar en la gráfica, la composición de nucleótidos en todas las variaciones anteriormente analizadas son muy parecidas y todas tienen casi la misma cantidad de bases, es fundamental analizar sus diferencias. Se puede observar que en la secuencia de nucleótidos de las variantes A(H1N1) y A(H2N3) se tienen casi la misma cantidad y distribución de bases, lo cual indica que son mucho más parecidas entre sí que la variante A(H7N3). En cuanto, a las variantes de los virus de los demás contienentes, es muy interesante observar que aunque se utilizan variantes diferentes del virus de influenza tipo A, la distribución de bases nitrogenadas no cambia mucho con respecto a la de los demás continentes. También, se observa que la gráfica de América del Norte es muy parecida a la de América del Sur (aún siendo diferentes variantes), posiblemente debido a la cercanía geográfica. Las variaciones genéticas son importantes porque pueden influir directamente en la estructura de las proteínas superficiales del virus de la influenza. La sustitución de un aminoácido por otro puede afectar las características de un virus, como por ejemplo cuán bien se propaga un virus entre las personas y cuán susceptible es el virus a los medicamentos antivirales o a las vacunas actuales.
+
+### Gráfica 2: Análisis jerárquico (árbol filogenético)
+A partir del alineamiento de secuencias anteriormente presentadas, se puede elaborar este árbol filogenético. Este árbol representa las nueve variantes de virus analizadas anteriormente. El patrón en el que se conectan ramas representa la forma en que evolucionaron los virus a partir de una serie de ancestros comunes. Cada punto de ramificación (nodo interno) representa un punto de divergencia o separación de un grupo en dos grupos descendientes. Por lo tanto, la secuencia más divergente sería la influenza A(H1N2) de Minnesota, EU, lo cual, tiene sentido ya que se cree que varias variantes de influeza que han llegado a México y otros países proviene de Estados Unidos. 
+
+El árbol filogenético anteriormente presentado, permite observar como los virus han ido evolucionando a partir de ancestros comunes. El árbol nos dice que las especies más relacionadas entre sí son las que tienen un ancestro común más reciente (mientras más a la derecha esten, más recientes son), por ejemplo, el H3N2 de la Ciudad de México con el de Ashburton o H1N1 de México con Bogotá. Esto, en el caso de México y Bogotá, probablemente se deba a su cercanía geográfica, ya que se encuentran en América, por lo que tienen facilidad para transportarse de un país a otro.
+
+Así mismo, los componentes que están menos relacionados son aquellos que tienen un ancestro común menos reciente. Por ejemplo,  se puede observar que el ancestro menos reciente es la Influenza A en Minnesota, seguido de H1N1 en Tailandia y H1N1 en España. También, es importante mencionar que los datos en los arboles filogenéticos son hipótesis, no hechos definitivos.
+
+## Citas de paquetes utilizados
+```{r}
+citation("ape")
+citation("seqinr")
+citation("phangorn")
+citation("phytools")
+citation("geiger")
+citation("Biostrings")
+citation("adegenet")
+citation("ggtree")
+citation("DECIPHER")
+citation("viridis")
+citation("ggplot2")
+
+```
